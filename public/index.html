@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>YouTube Downloader</title>
+  <style>
+    body {
+      font-family: Arial;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 12px 24px;
+      background: #141413;
+      color: white;
+      border: none;
+      border-radius: 9999px;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: gray;
+    }
+
+    #status {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .loading {
+      background: #fff3cd;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+
+<body>
+  <input type="url" id="url" placeholder="Paste YouTube URL here..." />
+  <button onclick="download()">Let's go</button>
+  <div id="status"></div>
+
+  <script>
+    async function download() {
+      const url = document.getElementById('url').value;
+      const status = document.getElementById('status');
+
+      if (!url) return status.innerHTML = '<div class="error">Enter URL</div>';
+
+      status.innerHTML = '<div class="loading">Processing... Please wait</div>';
+      status.className = 'loading';
+
+      try {
+        const response = await fetch(`/download?url=${encodeURIComponent(url)}`);
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = 'video.mp4';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(downloadUrl);
+          a.remove();
+
+          status.innerHTML = 'Download started! Check your browser downloads.';
+          document.getElementById('url').value = '';
+        } else {
+          const error = await response.text();
+          status.innerHTML = `<div class="error">Error: ${error}</div>`;
+        }
+      } catch (error) {
+        status.innerHTML = `<div class="error">Network error: ${error.message}</div>`;
+      }
+    }
+
+    document.getElementById('url').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') download();
+    });
+  </script>
+</body>
+
+</html>
