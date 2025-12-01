@@ -25,10 +25,10 @@ app.get('/download', (req, res) => {
   const downloadsDir = path.join(__dirname, 'downloads');
   if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir);
 
-  const fileName = 'video.mp4';
+  // Use unique filename to avoid conflicts
+  const timestamp = Date.now();
+  const fileName = `video-${timestamp}.mp4`;
   const filePath = path.join(downloadsDir, fileName);
-
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
   // Use local yt-dlp binary if it exists (Railway), otherwise use system yt-dlp
   const ytdlpPath = fs.existsSync(path.join(__dirname, 'yt-dlp'))
@@ -78,18 +78,30 @@ app.get('/download', (req, res) => {
   ytDlp.on('close', (code) => {
     console.log(`yt-dlp exited with code: ${code}`);
     if (code === 0) {
+      // Wait for file to be fully written
       setTimeout(() => {
         if (fs.existsSync(filePath)) {
           console.log('✅ Download complete:', fileName);
-          res.download(filePath, fileName, (err) => {
-            if (!err) fs.unlinkSync(filePath);
-            else console.error('Error sending file:', err);
+          // Send file to user with a clean name
+          res.download(filePath, 'video.mp4', (err) => {
+            if (!err) {
+              // Clean up the downloaded file
+              try {
+                fs.unlinkSync(filePath);
+                console.log('Cleaned up:', fileName);
+              } catch (e) {
+                console.error('Error deleting file:', e);
+              }
+            } else {
+              console.error('Error sending file:', err);
+            }
           });
         } else {
           console.error('❌ File not found after download');
+          console.error('Files in downloads dir:', fs.readdirSync(downloadsDir));
           res.status(500).send('File not found after download');
         }
-      }, 500);
+      }, 1000);
     } else {
       console.error('❌ Download failed with code:', code);
       console.error('stderr output:', stderrOutput);
