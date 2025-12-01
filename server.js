@@ -22,7 +22,12 @@ app.get('/download', (req, res) => {
 
   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-  const ytDlp = spawn('yt-dlp', [
+  // Use local yt-dlp binary if it exists (Railway), otherwise use system yt-dlp
+  const ytdlpPath = fs.existsSync(path.join(__dirname, 'yt-dlp'))
+    ? path.join(__dirname, 'yt-dlp')
+    : 'yt-dlp';
+
+  const ytDlp = spawn(ytdlpPath, [
     videoUrl,
     '-f', 'bestvideo+bestaudio/best',
     '--merge-output-format', 'mp4',
@@ -59,6 +64,7 @@ app.get('/download', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
