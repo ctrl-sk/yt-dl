@@ -1,5 +1,5 @@
 const express = require('express');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
@@ -35,10 +35,18 @@ app.get('/download', (req, res) => {
     ? path.join(__dirname, 'yt-dlp')
     : 'yt-dlp';
 
-  // On Railway (production), use system ffmpeg. Locally, use ffmpeg-static
-  const ffmpegPath = process.env.NODE_ENV === 'production'
-    ? 'ffmpeg'
-    : require('ffmpeg-static');
+  // Try to use system ffmpeg first (Railway), fallback to ffmpeg-static
+  let ffmpegPath = 'ffmpeg';
+  try {
+    // Check if system ffmpeg exists by trying to spawn it
+    execSync('which ffmpeg', { stdio: 'ignore' });
+    ffmpegPath = 'ffmpeg';
+    console.log('Using system ffmpeg');
+  } catch (error) {
+    // System ffmpeg not found, use ffmpeg-static
+    ffmpegPath = require('ffmpeg-static');
+    console.log('Using ffmpeg-static');
+  }
 
   console.log('Using yt-dlp at:', ytdlpPath);
   console.log('ffmpeg location:', ffmpegPath);
