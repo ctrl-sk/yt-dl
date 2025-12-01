@@ -36,20 +36,18 @@ app.get('/download', (req, res) => {
     : 'yt-dlp';
 
   // Try to use system ffmpeg first (Railway), fallback to ffmpeg-static
-  let ffmpegPath = 'ffmpeg';
+  let ffmpegPath;
   try {
-    // Check if system ffmpeg exists by trying to spawn it
-    execSync('which ffmpeg', { stdio: 'ignore' });
-    ffmpegPath = 'ffmpeg';
-    console.log('Using system ffmpeg');
+    // Get the full path to system ffmpeg
+    ffmpegPath = execSync('which ffmpeg', { encoding: 'utf8' }).trim();
+    console.log('Using system ffmpeg at:', ffmpegPath);
   } catch (error) {
     // System ffmpeg not found, use ffmpeg-static
     ffmpegPath = require('ffmpeg-static');
-    console.log('Using ffmpeg-static');
+    console.log('Using ffmpeg-static at:', ffmpegPath);
   }
 
   console.log('Using yt-dlp at:', ytdlpPath);
-  console.log('ffmpeg location:', ffmpegPath);
 
   const ytDlp = spawn(ytdlpPath, [
     videoUrl,
