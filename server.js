@@ -35,14 +35,19 @@ app.get('/download', (req, res) => {
     ? path.join(__dirname, 'yt-dlp')
     : 'yt-dlp';
 
+  // On Railway (production), use system ffmpeg. Locally, use ffmpeg-static
+  const ffmpegPath = process.env.NODE_ENV === 'production'
+    ? 'ffmpeg'
+    : require('ffmpeg-static');
+
   console.log('Using yt-dlp at:', ytdlpPath);
-  console.log('ffmpeg location:', require('ffmpeg-static'));
+  console.log('ffmpeg location:', ffmpegPath);
 
   const ytDlp = spawn(ytdlpPath, [
     videoUrl,
     '-f', 'bestvideo+bestaudio/best',
     '--merge-output-format', 'mp4',
-    '--ffmpeg-location', require('ffmpeg-static'),
+    '--ffmpeg-location', ffmpegPath,
     '-o', filePath,
     '--no-warnings'
   ]);
