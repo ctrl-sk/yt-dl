@@ -58,6 +58,7 @@ app.get('/download', (req, res) => {
   });
 });
 
-app.listen(3000, () => {
-  console.log('Server running at http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
 });
